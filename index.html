@@ -171,6 +171,86 @@
             user-select: none;
         }
 
+        /* Slider styles */
+        .slider-container {
+            position: relative;
+            width: 120px; /* Adjust width as needed */
+            height: 20px;
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        .rain-intensity-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+            margin: 0;
+        }
+
+        .rain-intensity-slider:hover {
+            opacity: 1;
+        }
+
+        .rain-intensity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .rain-intensity-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .raindrop-thumb {
+            position: absolute;
+            left: 50%; /* Initial position, will be updated by JS */
+            transform: translateX(-50%);
+            width: 28px; /* Slightly larger */
+            height: 28px; /* Slightly larger */
+            background: linear-gradient(to bottom right, #87CEEB, #4682B4); /* Softer blue gradient */
+            border-radius: 60% 40% 70% 30% / 60% 30% 70% 40%; /* More organic raindrop shape */
+            transform: translateX(-50%) rotate(-15deg); /* Slight rotation for cuter look */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4); /* More pronounced shadow */
+            pointer-events: none; /* Allow clicks to pass through to the actual slider */
+            z-index: 2;
+        }
+
+        .rain-icon {
+            width: 15px;
+            height: 15px;
+            background: linear-gradient(to bottom right, #a7d9ff, #6cb3e9);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            margin: 0 5px;
+            opacity: 0.7;
+        }
+
+        .rain-icon.large-rain {
+            width: 25px;
+            height: 25px;
+            opacity: 0.9;
+        }
+
         /* 初始提示用户点击互动的遮罩，因为现代浏览器要求用户交互才能播放音频 */
         .interaction-overlay {
             position: absolute;
@@ -226,7 +306,13 @@
                 <path d="M8 5v14l11-7z"/>
             </svg>
         </button>
-        <div class="status-text">Rain Sounds</div>
+        <div class="rain-icon small-rain"></div>
+        <div class="slider-container">
+            <input type="range" min="0" max="100" value="50" class="rain-intensity-slider" id="rainIntensitySlider">
+            <div class="raindrop-thumb"></div>
+        </div>
+        <div class="rain-icon large-rain"></div>
+
     </div>
 
     <script>
@@ -347,6 +433,72 @@
                 playRain();
             }
         });
+
+        // 4. 滑动条控制雨滴强度和音量
+        const rainIntensitySlider = document.getElementById('rainIntensitySlider');
+        const raindropThumb = document.querySelector('.raindrop-thumb');
+        const rainContainer = document.getElementById('rainContainer');
+        const windowOutside = document.querySelector('.window-outside');
+
+        function updateRainIntensity(value) {
+            // Update CSS rain drops (e.g., number of drops, animation speed)
+            // For simplicity, let's adjust the number of drops and their animation duration
+            const dropCount = Math.floor(value / 100 * 150) + 50; // 50 to 200 drops
+            const drops = rainContainer.querySelectorAll('.drop');
+            
+            // Remove excess drops or add new ones
+            if (drops.length > dropCount) {
+                for (let i = drops.length - 1; i >= dropCount; i--) {
+                    drops[i].remove();
+                }
+            } else if (drops.length < dropCount) {
+                const dropsToAdd = dropCount - drops.length;
+                for (let i = 0; i < dropsToAdd; i++) {
+                    const drop = document.createElement('div');
+                    drop.classList.add('drop');
+                    const left = Math.random() * 100;
+                    const delay = Math.random() * 2;
+                    const duration = Math.random() * 0.5 + 0.5;
+                    drop.style.left = `${left}%`;
+                    drop.style.animationDelay = `${delay}s`;
+                    drop.style.animationDuration = `${duration}s`;
+                    drop.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
+                    rainContainer.appendChild(drop);
+                }
+            }
+
+            // Adjust animation speed based on intensity
+            // This is a more complex change, might require re-creating CSS rules or modifying them dynamically
+            // For now, let's just adjust the blur of the background to simulate heavier rain
+            const blurValue = 8 + (value / 100 * 7); // 8px to 15px blur
+            const brightnessValue = 0.6 - (value / 100 * 0.3); // 0.6 to 0.3 brightness
+            windowOutside.style.filter = `blur(${blurValue}px) brightness(${brightnessValue})`;
+
+            // Update audio volume
+            if (audioCtx && rainGainNode) {
+                const targetGain = value / 100 * 0.8; // Max volume 0.8
+                fadeAudio(targetGain, 0.1); // Quick fade
+            }
+        }
+
+        rainIntensitySlider.addEventListener('input', (event) => {
+            const value = event.target.value;
+            const thumbWidth = raindropThumb.offsetWidth;
+            const sliderWidth = rainIntensitySlider.offsetWidth;
+            const thumbPosition = (value / 100) * (sliderWidth - thumbWidth) + thumbWidth / 2;
+            
+            raindropThumb.style.left = `${thumbPosition}px`;
+            updateRainIntensity(value);
+        });
+
+        // Initialize thumb position
+        const initialValue = rainIntensitySlider.value;
+        const thumbWidth = raindropThumb.offsetWidth;
+        const sliderWidth = rainIntensitySlider.offsetWidth;
+        const initialThumbPosition = (initialValue / 100) * (sliderWidth - thumbWidth) + thumbWidth / 2;
+        raindropThumb.style.left = `${initialThumbPosition}px`;
+        updateRainIntensity(initialValue);
+
     </script>
 </body>
 </html>
