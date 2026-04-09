@@ -236,7 +236,7 @@ export default function RainyHomepage() {
         {/* Content area */}
         <div className="relative z-30 w-full h-full flex flex-col justify-center items-center pointer-events-none">
           <h1 className="greeting">hi, welcome</h1>
-          <StatusCallout statusText="She is currently [ 💻 Working]" />
+          <StatusCallout statusText="She is currently [ 🛏Sleeping]" />
         </div>
 
         {/* The Glass Widget - Bottom Controls */}
