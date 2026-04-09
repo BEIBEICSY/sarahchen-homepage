@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarah Chen | hi, welcome</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Caveat', cursive;
+        }
+
+        /* 窗外背景图：模糊的城市夜景/雨景 */
+        .window-outside {
+            position: absolute;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
+            /* 选用一张偏暗色调的窗外城市或风景图 */
+            background: url('https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center;
+            background-size: cover;
+            filter: blur(8px) brightness(0.6);
+            z-index: 0;
+        }
+
+        /* 模拟玻璃反光和水汽 */
+        .glass-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 雨滴容器 */
+        .rain-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* CSS 雨滴动画 */
+        .drop {
+            position: absolute;
+            top: -150px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.25));
+            width: 2px;
+            height: 100px;
+            pointer-events: none;
+            animation: drop linear infinite;
+        }
+
+        @keyframes drop {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(120vh); opacity: 0; }
+        }
+
+        /* 主体内容区 */
+        .content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 手写文字动效 */
+        .greeting {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 8rem;
+            text-shadow: 0 0 15px rgba(255,255,255,0.2);
+            position: relative;
+            /* 预留右侧空间防止斜体或手写体被 clip-path 裁切掉边缘 */
+            padding-right: 0.2em;
+            
+            /* 利用 clip-path 实现简单的从左到右"书写"展开的效果 */
+            clip-path: polygon(0 0, 0 0, 0 110%, 0% 110%);
+            animation: revealText 2.5s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+            animation-delay: 0.5s;
+        }
+
+        @media (max-width: 768px) {
+            .greeting {
+                font-size: 5rem;
+            }
+        }
+
+        @keyframes revealText {
+            0% { clip-path: polygon(0 0, 0 0, 0 110%, 0% 110%); }
+            100% { clip-path: polygon(0 -10%, 110% -10%, 110% 110%, 0 110%); }
+        }
+
+        /* 底部控制栏 */
+        .controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+
+        .controls:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .play-pause-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .play-pause-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .play-pause-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .status-text {
+            color: rgba(255, 255, 255, 0.7);
+            font-family: sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            user-select: none;
+        }
+
+        /* 初始提示用户点击互动的遮罩，因为现代浏览器要求用户交互才能播放音频 */
+        .interaction-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            font-family: sans-serif;
+            letter-spacing: 2px;
+            transition: opacity 0.5s ease;
+        }
+        
+        .interaction-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 初次交互遮罩 -->
+    <div class="interaction-overlay" id="overlay">
+    </div>
+
+    <!-- 窗外背景 -->
+    <div class="window-outside"></div>
+    <!-- 玻璃反光层 -->
+    <div class="glass-overlay"></div>
+    <!-- 雨滴层 -->
+    <div class="rain-container" id="rainContainer"></div>
+
+    <!-- 内容区 -->
+    <div class="content">
+        <h1 class="greeting">hi, welcome</h1>
+    </div>
+
+    <!-- 底部控制器 -->
+    <div class="controls">
+        <button class="play-pause-btn" id="playPauseBtn" title="Play/Pause Rain Sound">
+            <!-- 默认显示暂停图标，因为进入就会播放 -->
+            <svg id="icon-pause" viewBox="0 0 24 24" style="display: block;">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+            <svg id="icon-play" viewBox="0 0 24 24" style="display: none;">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        </button>
+        <div class="status-text">Rain Sounds</div>
+    </div>
+
+    <script>
+        // 1. 生成 CSS 雨滴特效
+        function createRain() {
+            const container = document.getElementById('rainContainer');
+            const dropCount = 100; // 雨滴数量
+
+            for (let i = 0; i < dropCount; i++) {
+                const drop = document.createElement('div');
+                drop.classList.add('drop');
+                
+                // 随机位置、长度、动画时长和延迟
+                const left = Math.random() * 100; // 0 到 100 vw
+                const delay = Math.random() * 2; // 0 到 2s
+                const duration = Math.random() * 0.5 + 0.5; // 0.5 到 1s
+                
+                drop.style.left = `${left}%`;
+                drop.style.animationDelay = `${delay}s`;
+                drop.style.animationDuration = `${duration}s`;
+                
+                // 给部分雨滴倾斜角度，模拟风
+                drop.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
+
+                container.appendChild(drop);
+            }
+        }
+        createRain();
+
+        // 2. Web Audio API 生成雨天白噪音
+        let audioCtx;
+        let rainGainNode;
+        let isPlaying = false;
+
+        function initAudio() {
+            if (audioCtx) return;
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const bufferSize = audioCtx.sampleRate * 2; // 2 seconds buffer
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+
+            // 生成近似粉红噪音（比纯白噪音听起来更温和，类似雨声）
+            let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                let white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                data[i] *= 0.11; // 补偿音量
+                b6 = white * 0.115926;
+            }
+
+            // 噪音源
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            noise.loop = true;
+
+            // 低通滤波器让噪音更沉闷，像在玻璃外
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 800; // 调整频率控制“雨”的大小
+
+            // 音量控制
+            rainGainNode = audioCtx.createGain();
+            rainGainNode.gain.value = 0; // 初始音量为0，稍后淡入
+
+            noise.connect(filter);
+            filter.connect(rainGainNode);
+            rainGainNode.connect(audioCtx.destination);
+            
+            noise.start(0);
+        }
+
+        function fadeAudio(targetGain, duration) {
+            const currentTime = audioCtx.currentTime;
+            rainGainNode.gain.cancelScheduledValues(currentTime);
+            rainGainNode.gain.setValueAtTime(rainGainNode.gain.value, currentTime);
+            rainGainNode.gain.linearRampToValueAtTime(targetGain, currentTime + duration);
+        }
+
+        function playRain() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            fadeAudio(0.5, 2); // 2秒淡入到0.5音量
+            isPlaying = true;
+            document.getElementById('icon-play').style.display = 'none';
+            document.getElementById('icon-pause').style.display = 'block';
+        }
+
+        function pauseRain() {
+            fadeAudio(0, 1); // 1秒淡出
+            isPlaying = false;
+            document.getElementById('icon-pause').style.display = 'none';
+            document.getElementById('icon-play').style.display = 'block';
+        }
+
+        // 3. 交互控制
+        const overlay = document.getElementById('overlay');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+
+        overlay.addEventListener('click', () => {
+            overlay.classList.add('hidden');
+            initAudio();
+            playRain();
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                pauseRain();
+            } else {
+                if (!audioCtx) initAudio();
+                playRain();
+            }
+        });
+    </script>
+</body>
+</html>
