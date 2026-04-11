@@ -2,9 +2,9 @@ import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import BackgroundCanvas from './BackgroundCanvas';
-import StatusCallout from './StatusCallout';
+import StatusPulse from './StatusPulse';
 
-export default function RainyHomepage() {
+export default function RainyHomepage({ status }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioCtx = useRef(null);
   const rainGainNode = useRef(null);
@@ -236,7 +236,7 @@ export default function RainyHomepage() {
         {/* Content area */}
         <div className="relative z-30 w-full h-full flex flex-col justify-center items-center pointer-events-none">
           <h1 className="greeting">hi, welcome</h1>
-          <StatusCallout statusText="She is currently [ 🛏Sleeping]" />
+          <StatusPulse status={status} />
         </div>
 
         {/* The Glass Widget - Bottom Controls */}
